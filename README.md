@@ -39,8 +39,8 @@ uv run pytest tests/ -v
 ## Deploy to Azure
 
 ```bash
-# Push image to ACR
-docker tag my-pipeline hyfregistry.azurecr.io/my-pipeline:1.0
+# Build for linux/amd64 (required by Azure Container Apps) and push to ACR
+docker build --platform linux/amd64 -t hyfregistry.azurecr.io/my-pipeline:1.0 .
 docker push hyfregistry.azurecr.io/my-pipeline:1.0
 
 # Create Container App Job
