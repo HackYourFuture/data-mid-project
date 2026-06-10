@@ -14,10 +14,18 @@
 ## Run locally
 
 ```bash
-# 1. Copy env file and fill in values
+# 1. Populate .env from Azure Key Vault
 cp .env.example .env
+echo "POSTGRES_URL=$(az keyvault secret show --vault-name kv-hyf-data --name postgres-url --query value -o tsv)" >> .env
+echo "AZURE_STORAGE_CONNECTION_STRING=$(az keyvault secret show --vault-name kv-hyf-data --name storage-connection-string --query value -o tsv)" >> .env
 
-# 2. Build and run with Docker
+# 2. Install dependencies
+uv sync
+
+# 3. Run directly (without Docker)
+uv run python -m src.pipeline
+
+# 4. Or build and run with Docker
 docker build -t my-pipeline .
 docker run --env-file .env my-pipeline
 ```
@@ -25,15 +33,14 @@ docker run --env-file .env my-pipeline
 ## Run tests
 
 ```bash
-pip install pytest
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ## Deploy to Azure
 
 ```bash
-# Push image to ACR
-docker tag my-pipeline hyfregistry.azurecr.io/my-pipeline:1.0
+# Build for linux/amd64 (required by Azure Container Apps) and push to ACR
+docker build --platform linux/amd64 -t hyfregistry.azurecr.io/my-pipeline:1.0 .
 docker push hyfregistry.azurecr.io/my-pipeline:1.0
 
 # Create Container App Job
@@ -46,11 +53,33 @@ az containerapp job create \
   --trigger-type Manual \
   --replica-timeout 300 \
   --replica-retry-limit 0 \
-  --env-vars POSTGRES_URL="<url>" AZURE_STORAGE_CONNECTION_STRING="<conn>" LOG_LEVEL=INFO
+  --env-vars \
+    POSTGRES_URL="$(az keyvault secret show --vault-name kv-hyf-data --name postgres-url --query value -o tsv)" \
+    AZURE_STORAGE_CONNECTION_STRING="$(az keyvault secret show --vault-name kv-hyf-data --name storage-connection-string --query value -o tsv)" \
+    LOG_LEVEL=INFO
 
 # Start the job
 az containerapp job start --name my-pipeline-job --resource-group rg-hyf-data
 ```
+
+## Install psql
+
+`psql` is the Postgres command-line client used to verify results. Install it once:
+
+**macOS**
+```bash
+brew install libpq
+echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Linux (Debian/Ubuntu)**
+```bash
+sudo apt-get install -y postgresql-client
+```
+
+**Windows**
+Download and run the installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/). The installer includes `psql`. After installing, open a new terminal and verify with `psql --version`.
 
 ## Verify results
 
@@ -58,7 +87,7 @@ az containerapp job start --name my-pipeline-job --resource-group rg-hyf-data
 # Check job execution
 az containerapp job execution list --name my-pipeline-job --resource-group rg-hyf-data --output table
 
-# Check Postgres
+# Check Postgres (set POSTGRES_URL first — see Run locally above)
 psql "$POSTGRES_URL" -c "SELECT COUNT(*) FROM your_table_name;"  # replace with your table name
 
 # Check Blob Storage
