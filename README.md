@@ -57,13 +57,32 @@ az containerapp job create \
 az containerapp job start --name my-pipeline-job --resource-group rg-hyf-data
 ```
 
+## Install psql
+
+`psql` is the Postgres command-line client used to verify results. Install it once:
+
+**macOS**
+```bash
+brew install libpq
+echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Linux (Debian/Ubuntu)**
+```bash
+sudo apt-get install -y postgresql-client
+```
+
+**Windows**
+Download and run the installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/). The installer includes `psql`. After installing, open a new terminal and verify with `psql --version`.
+
 ## Verify results
 
 ```bash
 # Check job execution
 az containerapp job execution list --name my-pipeline-job --resource-group rg-hyf-data --output table
 
-# Check Postgres
+# Check Postgres (set POSTGRES_URL first — see Run locally above)
 psql "$POSTGRES_URL" -c "SELECT COUNT(*) FROM your_table_name;"  # replace with your table name
 
 # Check Blob Storage
