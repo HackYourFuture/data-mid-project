@@ -41,9 +41,29 @@ def validate(raw_records: list[dict]) -> list[WeatherReading]:
 
 
 def transform(readings: list[WeatherReading]) -> pd.DataFrame:
-    """Convert validated records to a DataFrame. Add any transformations here."""
-    # TODO: Add your own transformations (unit conversions, derived columns, etc.)
-    return pd.DataFrame([r.model_dump() for r in readings])
+    """Convert validated records to a DataFrame and apply transformations.
+
+    This is where pandas earns its place. Replace the examples below with
+    transformations that make sense for your data.
+    """
+    df = pd.DataFrame([r.model_dump() for r in readings])
+
+    # TODO: Replace these with your own transformations. Examples:
+    #
+    # Parse timestamp strings into proper datetime objects:
+    #   df["timestamp"] = pd.to_datetime(df["timestamp"])
+    #
+    # Derive a new column from existing data:
+    #   df["temp_fahrenheit"] = df["temperature"] * 9 / 5 + 32
+    #
+    # Drop rows where a required field is missing:
+    #   df = df.dropna(subset=["temperature"])
+    #
+    # Rename columns to match your Postgres table:
+    #   df = df.rename(columns={"timestamp": "recorded_at"})
+
+    log.info("Transformed %d rows", len(df))
+    return df
 
 
 def run():
