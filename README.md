@@ -19,7 +19,13 @@ cp .env.example .env
 echo "POSTGRES_URL=$(az keyvault secret show --vault-name kv-hyf-data --name postgres-url --query value -o tsv)" >> .env
 echo "AZURE_STORAGE_CONNECTION_STRING=$(az keyvault secret show --vault-name kv-hyf-data --name storage-connection-string --query value -o tsv)" >> .env
 
-# 2. Build and run with Docker
+# 2. Install dependencies
+uv sync
+
+# 3. Run directly (without Docker)
+uv run python -m src.pipeline
+
+# 4. Or build and run with Docker
 docker build -t my-pipeline .
 docker run --env-file .env my-pipeline
 ```
@@ -27,8 +33,7 @@ docker run --env-file .env my-pipeline
 ## Run tests
 
 ```bash
-pip install pytest
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ## Deploy to Azure

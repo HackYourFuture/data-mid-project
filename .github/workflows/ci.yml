@@ -10,21 +10,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install ruff pytest
+        run: uv sync --frozen
 
       - name: Lint
-        run: ruff check src/
+        run: uv run ruff check src/
 
       - name: Format check
-        run: ruff format --check src/
+        run: uv run ruff format --check src/
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: uv run pytest tests/ -v
+
+  # Uncomment this job once your pipeline works end to end locally.
+  # push-to-acr:
+  #   needs: lint
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Azure login
+  #       uses: azure/login@v2
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: ACR login
+  #       run: az acr login --name hyfregistry
+  #     - name: Build and push
+  #       run: |
+  #         docker build -t hyfregistry.azurecr.io/<your-handle>-pipeline:${{ github.sha }} .
+  #         docker push hyfregistry.azurecr.io/<your-handle>-pipeline:${{ github.sha }}
