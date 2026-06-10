@@ -10,21 +10,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install ruff pytest
+        run: uv sync --frozen
 
       - name: Lint
-        run: ruff check src/
+        run: uv run ruff check src/
 
       - name: Format check
-        run: ruff format --check src/
+        run: uv run ruff format --check src/
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: uv run pytest tests/ -v
+
+  # Uncomment and configure once you have ACR access:
+  # push-to-acr:
+  #   needs: lint
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Build and push
+  #       run: |
+  #         docker build --platform linux/amd64 -t hyfregistry.azurecr.io/${{ github.event.repository.name }}:${{ github.sha }} .
+  #         docker push hyfregistry.azurecr.io/${{ github.event.repository.name }}:${{ github.sha }}
