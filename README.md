@@ -14,8 +14,10 @@
 ## Run locally
 
 ```bash
-# 1. Copy env file and fill in values
+# 1. Populate .env from Azure Key Vault
 cp .env.example .env
+echo "POSTGRES_URL=$(az keyvault secret show --vault-name kv-hyf-data --name postgres-url --query value -o tsv)" >> .env
+echo "AZURE_STORAGE_CONNECTION_STRING=$(az keyvault secret show --vault-name kv-hyf-data --name storage-connection-string --query value -o tsv)" >> .env
 
 # 2. Build and run with Docker
 docker build -t my-pipeline .
@@ -46,7 +48,10 @@ az containerapp job create \
   --trigger-type Manual \
   --replica-timeout 300 \
   --replica-retry-limit 0 \
-  --env-vars POSTGRES_URL="<url>" AZURE_STORAGE_CONNECTION_STRING="<conn>" LOG_LEVEL=INFO
+  --env-vars \
+    POSTGRES_URL="$(az keyvault secret show --vault-name kv-hyf-data --name postgres-url --query value -o tsv)" \
+    AZURE_STORAGE_CONNECTION_STRING="$(az keyvault secret show --vault-name kv-hyf-data --name storage-connection-string --query value -o tsv)" \
+    LOG_LEVEL=INFO
 
 # Start the job
 az containerapp job start --name my-pipeline-job --resource-group rg-hyf-data
