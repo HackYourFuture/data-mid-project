@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from contextlib import closing
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 import psycopg2
@@ -15,34 +15,48 @@ log = logging.getLogger(__name__)
 
 
 def insert_readings(df: pd.DataFrame) -> None:
-    """Insert a DataFrame of readings into Postgres."""
+    """Insert a DataFrame of readings into Postgres.
+
+    Creates the table in your personal schema (DB_SCHEMA env var, e.g. dev_alice).
+    All CREATE TABLE and INSERT statements run inside that schema so your tables
+    never collide with other students on the shared server.
+    """
     db_url = os.environ["POSTGRES_URL"]
+    schema = os.environ.get("DB_SCHEMA", "public")
 
     with closing(psycopg2.connect(db_url)) as conn:
-        cur = conn.cursor()
-
-        # TODO: Replace 'weather_readings' with a unique name (e.g. alice_weather_readings)
-        # to avoid collisions on the shared Postgres server. See Week 7 Gotcha #8.
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS weather_readings (
-                id SERIAL PRIMARY KEY,
-                city TEXT NOT NULL,
-                temperature REAL NOT NULL,
-                humidity REAL NOT NULL,
-                timestamp TEXT NOT NULL
-            )
-        """)
-
-        for _, row in df.iterrows():
+        with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO weather_readings (city, temperature, humidity, timestamp) VALUES (%s, %s, %s, %s)",
-                (row["city"], row["temperature"], row["humidity"], row["timestamp"]),
+                f"CREATE SCHEMA IF NOT EXISTS {schema}"  # noqa: S608
             )
+            cur.execute(f"SET search_path TO {schema}")  # noqa: S608
+
+            # TODO: Replace 'weather_readings' with a name that describes your data.
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS weather_readings (
+                    id SERIAL PRIMARY KEY,
+                    city TEXT NOT NULL,
+                    temperature REAL NOT NULL,
+                    humidity REAL NOT NULL,
+                    timestamp TEXT NOT NULL
+                )
+            """)
+
+            for _, row in df.iterrows():
+                cur.execute(
+                    "INSERT INTO weather_readings (city, temperature, humidity, timestamp)"
+                    " VALUES (%s, %s, %s, %s)",
+                    (
+                        row["city"],
+                        row["temperature"],
+                        row["humidity"],
+                        row["timestamp"],
+                    ),
+                )
 
         conn.commit()
-        cur.close()
 
-    log.info("Inserted %d rows into Postgres", len(df))
+    log.info("Inserted %d rows into %s.weather_readings", len(df), schema)
 
 
 def upload_raw_json(raw_data) -> None:
@@ -55,7 +69,9 @@ def upload_raw_json(raw_data) -> None:
     except ResourceExistsError:
         pass
 
-    blob_name = f"pipeline/{datetime.utcnow().strftime('%Y-%m-%d_%H%M%S')}.json"
+    blob_name = (
+        f"pipeline/{datetime.now(timezone.utc).strftime('%Y-%m-%d_%H%M%S')}.json"
+    )
     container.upload_blob(
         name=blob_name,
         data=json.dumps(raw_data).encode("utf-8"),
