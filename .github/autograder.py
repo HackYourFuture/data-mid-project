@@ -314,6 +314,7 @@ def check_git_workflow():
 
 MANUAL_CHECKS = [
     "Docker image builds and runs locally (`docker run --env-file .env`)",
+    "Transform does real work: pipeline.py calls at least one of parse_dates / dropna / fillna / rename / assign / a new derived column (not just pd.DataFrame(records) → storage)",
     "Azure ACR: image exists with a tagged version",
     "Azure: Container App Job created with --trigger-type Schedule --cron-expression",
     "Azure: job ran successfully (execution history shows Succeeded)",
