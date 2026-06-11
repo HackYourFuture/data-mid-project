@@ -1,0 +1,36 @@
+name: Week 7 Autograder
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  grade:
+    name: Grade submission
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync --frozen
+        continue-on-error: true
+
+      - name: Run pytest
+        run: |
+          uv run pytest tests/ -v; echo $? > /tmp/pytest_exit_code.txt
+        continue-on-error: true
+
+      - name: Run autograder
+        if: always()
+        run: |
+          PYTEST_EXIT_CODE=$(cat /tmp/pytest_exit_code.txt 2>/dev/null || echo "1")
+          export PYTEST_EXIT_CODE
+          python .github/autograder.py
