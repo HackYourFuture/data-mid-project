@@ -318,7 +318,7 @@ MANUAL_CHECKS = [
     "Azure ACR: image exists with a tagged version",
     "Azure: Container App Job created with --trigger-type Schedule --cron-expression",
     "Azure: job ran successfully (execution history shows Succeeded)",
-    "Azure: job output verifiable (rows in Postgres or blobs in storage)",
+    "Azure: job output verifiable (rows in Postgres AND blobs in Blob Storage)",
     "Azure: job uses --registry-server, --replica-timeout 300, --env-vars",
     "Cleanup: Container App Job deleted after evaluation",
 ]
