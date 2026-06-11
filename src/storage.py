@@ -46,7 +46,12 @@ def insert_readings(df: pd.DataFrame) -> None:
                 cur.execute(
                     "INSERT INTO weather_readings (city, temperature, humidity, timestamp)"
                     " VALUES (%s, %s, %s, %s)",
-                    (row["city"], row["temperature"], row["humidity"], row["timestamp"]),
+                    (
+                        row["city"],
+                        row["temperature"],
+                        row["humidity"],
+                        row["timestamp"],
+                    ),
                 )
 
         conn.commit()
