@@ -43,14 +43,15 @@ uv run pytest tests/ -v
 docker build --platform linux/amd64 -t hyfregistry.azurecr.io/my-pipeline:1.0 .
 docker push hyfregistry.azurecr.io/my-pipeline:1.0
 
-# Create Container App Job
+# Create Container App Job (runs daily at 06:00 UTC)
 az containerapp job create \
   --name my-pipeline-job \
   --resource-group rg-hyf-data \
   --environment env-hyf-data \
   --image hyfregistry.azurecr.io/my-pipeline:1.0 \
   --registry-server hyfregistry.azurecr.io \
-  --trigger-type Manual \
+  --trigger-type Schedule \
+  --cron-expression "0 6 * * *" \
   --replica-timeout 300 \
   --replica-retry-limit 0 \
   --env-vars \
@@ -58,7 +59,7 @@ az containerapp job create \
     AZURE_STORAGE_CONNECTION_STRING="$(az keyvault secret show --vault-name kv-hyf-data --name storage-connection-string --query value -o tsv)" \
     LOG_LEVEL=INFO
 
-# Start the job
+# Trigger a manual run for testing (without waiting for the schedule)
 az containerapp job start --name my-pipeline-job --resource-group rg-hyf-data
 ```
 
