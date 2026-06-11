@@ -315,7 +315,7 @@ def check_git_workflow():
 MANUAL_CHECKS = [
     "Docker image builds and runs locally (`docker run --env-file .env`)",
     "Azure ACR: image exists with a tagged version",
-    "Azure: Container App Job created in the shared environment",
+    "Azure: Container App Job created with --trigger-type Schedule --cron-expression",
     "Azure: job ran successfully (execution history shows Succeeded)",
     "Azure: job output verifiable (rows in Postgres or blobs in storage)",
     "Azure: job uses --registry-server, --replica-timeout 300, --env-vars",
