@@ -42,15 +42,15 @@ uv run pytest tests/ -v
 
 ```bash
 # Build for linux/amd64 (required by Azure Container Apps) and push to ACR
-docker build --platform linux/amd64 -t hyfregistry.azurecr.io/my-pipeline:1.0 .
-docker push hyfregistry.azurecr.io/my-pipeline:1.0
+docker build --platform linux/amd64 -t hyfregistry.azurecr.io/my-pipeline:latest .
+docker push hyfregistry.azurecr.io/my-pipeline:latest
 
 # Create Container App Job (runs daily at 06:00 UTC)
 az containerapp job create \
   --name my-pipeline-job \
   --resource-group rg-hyf-data \
   --environment env-hyf-data \
-  --image hyfregistry.azurecr.io/my-pipeline:1.0 \
+  --image hyfregistry.azurecr.io/my-pipeline:latest \
   --registry-server hyfregistry.azurecr.io \
   --trigger-type Schedule \
   --cron-expression "0 6 * * *" \
