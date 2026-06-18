@@ -4,15 +4,14 @@ import logging
 import os
 import sys
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 import pandas as pd
+from dotenv import load_dotenv
 from pydantic import ValidationError
 
 from src.models import WeatherReading
 from src.storage import insert_readings, upload_raw_json
+
+load_dotenv()
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
