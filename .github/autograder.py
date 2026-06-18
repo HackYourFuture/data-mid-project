@@ -491,6 +491,19 @@ def build_markdown_summary(all_results: Results, score: int, total: int) -> str:
 # Main
 # ---------------------------------------------------------------------------
 
+def is_template_stub() -> bool:
+    """Return True when running inside the unmodified starter template.
+
+    The template's src/pipeline.py contains a placeholder comment that
+    students are expected to replace. If it's still there, this is the
+    template repo, not a student submission. Skip grading.
+    """
+    pipeline = ROOT / "src" / "pipeline.py"
+    if not pipeline.exists():
+        return False
+    return "# TODO: Replace with your API call" in pipeline.read_text(errors="replace")
+
+
 def main() -> int:
     pytest_exit_code_str = os.environ.get("PYTEST_EXIT_CODE", "1")
     try:
@@ -501,6 +514,12 @@ def main() -> int:
     print("=" * 60)
     print("  HackYourFuture: Week 7 Autograder")
     print("=" * 60)
+
+    if is_template_stub():
+        print("\n  Template repo detected: skipping grading.")
+        print("  Replace the stubs in src/ before the autograder runs.")
+        print("=" * 60)
+        return 0
 
     grouped: List[Tuple[str, Results]] = [
         ("File structure", check_file_structure()),
